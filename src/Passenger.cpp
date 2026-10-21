@@ -1,5 +1,60 @@
-
 #include "../include/Passenger.h"
+#include "../include/FileHandler.h"
+#include <sstream>
+
+PassengerManagement::PassengerManagement()
+{
+    FileHandler fh;
+    vector<string> records = fh.loadData("passengers.txt");
+
+    for (int i = 0; i < records.size(); i++)
+    {
+        stringstream ss(records[i]);
+        string field;
+        Passenger p;
+
+        if (getline(ss, field, '|'))
+            p.passengerID = stoi(field);
+        else
+            continue;
+
+        if (!getline(ss, p.name, '|'))
+            continue;
+
+        if (!getline(ss, field, '|'))
+            continue;
+        p.age = stoi(field);
+
+        if (!getline(ss, p.gender, '|'))
+            continue;
+
+        if (!getline(ss, p.category, '|'))
+            continue;
+
+        passengers.push_back(p);
+    }
+}
+
+void PassengerManagement::savePassengersToFile()
+{
+    FileHandler fh;
+    vector<string> records;
+
+    for (int i = 0; i < passengers.size(); i++)
+    {
+        stringstream ss;
+
+        ss << passengers[i].passengerID << "|"
+           << passengers[i].name << "|"
+           << passengers[i].age << "|"
+           << passengers[i].gender << "|"
+           << passengers[i].category;
+
+        records.push_back(ss.str());
+    }
+
+    fh.writeData("passengers.txt", records);
+}
 
 void PassengerManagement::addPassenger()
 {
@@ -25,6 +80,7 @@ void PassengerManagement::addPassenger()
     cout << "Enter Category: ";
     cin >> p.category;
     passengers.push_back(p);
+    savePassengersToFile();
     cout << "\nPassenger added successfully!" << endl;
 }
 
@@ -118,6 +174,7 @@ void PassengerManagement::updatePassenger()
             cout << "Enter New Category: ";
             cin >> passengers[i].category;
 
+savePassengersToFile();
             cout << "\nPassenger updated successfully!" << endl;
 
             found = 1;
@@ -144,7 +201,7 @@ void PassengerManagement::deletePassenger()
         if (passengers[i].passengerID == id)
         {
             passengers.erase(passengers.begin() + i);
-
+savePassengersToFile();
             cout << "Passenger deleted successfully!" << endl;
 
             found = 1;
@@ -202,7 +259,7 @@ void PassengerManagement::checkEligibility()
         cout << "Passenger not found!" << endl;
     }
 }
-Passenger* PassengerManagement::findPassengerByID(int id)
+Passenger *PassengerManagement::findPassengerByID(int id)
 {
     for (int i = 0; i < passengers.size(); i++)
     {
