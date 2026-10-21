@@ -97,3 +97,10 @@ cout << "Destination : " << destination << endl;
 cout << "Total Seats : " << totalSeats << endl;
 cout << "Available Seats : " << availableSeats << endl;
 }
+void Train::setAvailableSeats(int seats)
+{
+    if (seats >= 0 && seats <= totalSeats)
+    {
+        availableSeats = seats;
+    }
+}
