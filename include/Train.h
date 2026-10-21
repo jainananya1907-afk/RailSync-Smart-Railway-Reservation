@@ -1,4 +1,5 @@
-
+#ifndef Train_h
+#define Train_h
 #include <string>
 using namespace std;
 
@@ -13,6 +14,7 @@ private:
     int availableSeats;
 
 public:
+void setAvailableSeats(int seats);
     Train();
     Train(int number, string name, string src, string dest, int seats);
     int getTrainNumber();
@@ -28,3 +30,4 @@ public:
 
     void displayTrain();
 };
+#endif
