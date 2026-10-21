@@ -1,3 +1,5 @@
+#ifndef PASSENGER_H
+#define PASSENGER_H
 
 #include <iostream>
 #include <string>
@@ -7,11 +9,11 @@ using namespace std;
 class Passenger
 {
 public:
-    int passengerID;
-    string name;
-    int age;
-    string gender;
-    string category;
+int passengerID;
+string name;
+int age;
+string gender;
+string category;
 };
 
 class PassengerManagement
@@ -19,7 +21,11 @@ class PassengerManagement
 private:
     vector<Passenger> passengers;
 
+    void savePassengersToFile();
+
 public:
+    PassengerManagement();
+
     void addPassenger();
     void updatePassenger();
     void deletePassenger();
@@ -28,3 +34,5 @@ public:
     void checkEligibility();
     Passenger* findPassengerByID(int id);
 };
+
+#endif
