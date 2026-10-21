@@ -46,4 +46,4 @@ public:
     void displayTicket();
     void printTicket();
 };
-#endif 
+#endif
