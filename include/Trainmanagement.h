@@ -1,40 +1,42 @@
+
+#ifndef Trainmanagement_h
+#define Trainmanagement_h
+
 #include "Train.h"
+#include <string>
 using namespace std;
 
-// Node of the singly linked list
 struct TrainNode
 {
-Train data;
-TrainNode* next;
+    Train data;
+    TrainNode* next;
 
-
-TrainNode(Train t)
-{
-    data = t;
-    next = NULL;
-}
-
-
+    TrainNode(Train t)
+    {
+        data = t;
+        next = NULL;
+    }
 };
 
 class TrainManagement
 {
 private:
-TrainNode* head;
+    TrainNode* head;
+
+    void loadTrainsFromFile();
+    void saveTrainsToFile();
 
 public:
-TrainManagement();
+    TrainManagement();
+    ~TrainManagement();
 
-
-void addTrain();
-void updateTrain();
-void deleteTrain();
-void searchTrain();
-void displayTrain();
-void checkAvailability();
-Train* findTrainByNumber(int number);
-
-
+    void addTrain();
+    void updateTrain();
+    void deleteTrain();
+    void searchTrain();
+    void displayTrain();
+    void checkAvailability();
+    Train* findTrainByNumber(int number);
 };
 
- 
+#endif
