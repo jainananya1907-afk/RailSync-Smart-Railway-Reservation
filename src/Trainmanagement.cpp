@@ -1,283 +1,268 @@
-#include "TrainManagement.h"
+
 #include <iostream>
-#include <string>
+#include <fstream>
+#include <sstream>
+#include "TicketManagement.h"
+
 using namespace std;
 
-// Constructor
-TrainManagement::TrainManagement()
+TicketManagement::TicketManagement()
 {
-head = NULL;
+    head = NULL;
+    ticketCounter = 1000;
+    loadTicketsFromFile();
 }
 
-// 1. ADD TRAIN
-void TrainManagement::addTrain()
+TicketManagement::~TicketManagement()
 {
-int number, seats;
-string name, src, dest;
+    Node* current = head;
 
-
-cout << "\nEnter Train Number: ";
-cin >> number;
-
-// Check for duplicate train number
-TrainNode* temp = head;
-
-while (temp != NULL)
-{
-    if (temp->data.getTrainNumber() == number)
+    while (current != NULL)
     {
-        cout << "Train already exists!\n";
-        return;
+        Node* temp = current;
+        current = current->next;
+        delete temp;
     }
-
-    temp = temp->next;
 }
 
-cout << "Enter Train Name: ";
-cin.ignore();
-getline(cin, name);
-
-cout << "Enter Source: ";
-getline(cin, src);
-
-cout << "Enter Destination: ";
-getline(cin, dest);
-
-cout << "Enter Total Seats: ";
-cin >> seats;
-
-if (seats <= 0)
+void TicketManagement::loadTicketsFromFile()
 {
-    cout << "Invalid number of seats!\n";
-    return;
-}
+    ifstream file("tickets.txt");
+    string line;
 
-Train t(number, name, src, dest, seats);
+    long long maxPNR = 1000000000LL;
 
-TrainNode* newNode = new TrainNode(t);
-
-// If the list is empty
-if (head == NULL)
-{
-    head = newNode;
-}
-else
-{
-    temp = head;
-
-    // Traverse to the last node
-    while (temp->next != NULL)
+    while (getline(file, line))
     {
-        temp = temp->next;
-    }
+        stringstream ss(line);
+        string ticketNoStr, pnrStr, name, trainStr;
+        string src, dest, date, status;
 
-    // Link the new node
-    temp->next = newNode;
-}
+        getline(ss, ticketNoStr, '|');
+        getline(ss, pnrStr, '|');
+        getline(ss, name, '|');
+        getline(ss, trainStr, '|');
+        getline(ss, src, '|');
+        getline(ss, dest, '|');
+        getline(ss, date, '|');
+        getline(ss, status, '|');
 
-cout << "Train added successfully!\n";
+        if (ticketNoStr.empty() || pnrStr.empty())
+            continue;
 
+        int ticketNo = stoi(ticketNoStr);
+        long long pnr = stoll(pnrStr);
+        int trainNo = stoi(trainStr);
 
-}
+        Ticket t(ticketNo, pnr, name, trainNo,
+                 src, dest, date, status);
 
-// 2. UPDATE TRAIN
-void TrainManagement::updateTrain()
-{
-int number;
+        Node* newNode = new Node(t);
 
-
-cout << "\nEnter Train Number to Update: ";
-cin >> number;
-
-TrainNode* temp = head;
-
-while (temp != NULL)
-{
-    if (temp->data.getTrainNumber() == number)
-    {
-        string name, src, dest;
-
-        cout << "Enter New Train Name: ";
-        cin.ignore();
-        getline(cin, name);
-
-        cout << "Enter New Source: ";
-        getline(cin, src);
-
-        cout << "Enter New Destination: ";
-        getline(cin, dest);
-
-        // Preserve the original train number and seat count
-        int total = temp->data.getTotalSeats();
-        int available = temp->data.getAvailableSeats();
-
-        Train updatedTrain(
-            number, name, src, dest, total
-        );
-
-        // Preserve the current availability
-        int booked = total - available;
-
-        for (int i = 0; i < booked; i++)
+        if (head == NULL)
+            head = newNode;
+        else
         {
-            updatedTrain.reserveSeat();
+            Node* temp = head;
+            while (temp->next != NULL)
+                temp = temp->next;
+
+            temp->next = newNode;
         }
 
-        temp->data = updatedTrain;
+        if (ticketNo > ticketCounter)
+            ticketCounter = ticketNo;
 
-        cout << "Train updated successfully!\n";
-        return;
+        if (pnr > maxPNR)
+            maxPNR = pnr;
     }
 
-    temp = temp->next;
-}
+    file.close();
 
-cout << "Train not found!\n";
-
-
-}
-
-// 3. DELETE TRAIN
-void TrainManagement::deleteTrain()
-{
-int number;
-
-
-cout << "\nEnter Train Number to Delete: ";
-cin >> number;
-
-TrainNode* temp = head;
-TrainNode* prev = NULL;
-
-// Search for the train
-while (temp != NULL &&
-       temp->data.getTrainNumber() != number)
-{
-    prev = temp;
-    temp = temp->next;
-}
-
-// Train not found
-if (temp == NULL)
-{
-    cout << "Train not found!\n";
-    return;
-}
-
-// Case 1: Delete the first node
-if (prev == NULL)
-{
-    head = temp->next;
-}
-else
-{
-    // Case 2: Delete a middle or last node
-    prev->next = temp->next;
-}
-
-delete temp;
-
-cout << "Train deleted successfully!\n";
-
-
-}
-
-// 4. SEARCH TRAIN
-void TrainManagement::searchTrain()
-{
-int number;
-
-
-cout << "\nEnter Train Number to Search: ";
-cin >> number;
-
-TrainNode* temp = head;
-
-while (temp != NULL)
-{
-    if (temp->data.getTrainNumber() == number)
+    // Advance PNR generator beyond previously saved PNRs.
+    while (Ticket::generatePNR() <= maxPNR)
     {
-        cout << "\nTrain Found!\n";
-        temp->data.displayTrain();
-        return;
     }
-
-    temp = temp->next;
 }
 
-cout << "Train not found!\n";
-
-
-}
-
-// 5. DISPLAY ALL TRAINS
-void TrainManagement::displayTrain()
+void TicketManagement::saveTicketsToFile()
 {
-if (head == NULL)
-{
-cout << "\nNo trains available!\n";
-return;
-}
+    ofstream file("tickets.txt");
 
-
-TrainNode* temp = head;
-
-cout << "\n===== ALL TRAINS =====\n";
-
-while (temp != NULL)
-{
-    temp->data.displayTrain();
-
-    cout << "----------------------\n";
-
-    temp = temp->next;
-}
-
-
-}
-
-// 6. CHECK SEAT AVAILABILITY
-void TrainManagement::checkAvailability()
-{
-int number;
-
-
-cout << "\nEnter Train Number: ";
-cin >> number;
-
-TrainNode* temp = head;
-
-while (temp != NULL)
-{
-    if (temp->data.getTrainNumber() == number)
-    {
-        cout << "\nTrain: "
-             << temp->data.getTrainName() << endl;
-
-        temp->data.checkAvailability();
-        return;
-    }
-
-    temp = temp->next;
-}
-
-cout << "Train not found!\n";
-
-
-}
-Train* TrainManagement::findTrainByNumber(int number)
-{
-    TrainNode* temp = head;
+    Node* temp = head;
 
     while (temp != NULL)
     {
-        if (temp->data.getTrainNumber() == number)
-        {
-            return &(temp->data);
-        }
+        Ticket t = temp->ticket;
+
+        file << t.getTicketNumber() << "|"
+             << t.getPNR() << "|"
+             << t.getPassengerName() << "|"
+             << t.getTrainNumber() << "|"
+             << t.getSource() << "|"
+             << t.getDestination() << "|"
+             << t.getJourneyDate() << "|"
+             << t.getStatus() << "\n";
+
+        temp = temp->next;
+    }
+
+    file.close();
+}
+
+void TicketManagement::generateTicket()
+{
+    int trainNo;
+    string name, src, dest, date;
+
+    cout << "\nEnter Passenger Name: ";
+    getline(cin >> ws, name);
+
+    cout << "Enter Train Number: ";
+    cin >> trainNo;
+
+    cout << "Enter Source Station: ";
+    getline(cin >> ws, src);
+
+    cout << "Enter Destination Station: ";
+    getline(cin >> ws, dest);
+
+    cout << "Enter Journey Date (DD-MM-YYYY): ";
+    getline(cin >> ws, date);
+
+    long long pnr = Ticket::generatePNR();
+
+    Ticket newTicket(++ticketCounter, pnr, name, trainNo,
+                     src, dest, date, "Confirmed");
+
+    Node* newNode = new Node(newTicket);
+
+    if (head == NULL)
+        head = newNode;
+    else
+    {
+        Node* temp = head;
+        while (temp->next != NULL)
+            temp = temp->next;
+
+        temp->next = newNode;
+    }
+
+    saveTicketsToFile();
+
+    cout << "\nTicket generated successfully!\n";
+    cout << "Your Ticket Number: " << ticketCounter << endl;
+    cout << "Your PNR Number: " << pnr << endl;
+
+    newTicket.printTicket();
+}
+
+long long TicketManagement::generateTicketFromReservation(
+    string name, int trainNo, int seatNo)
+{
+    string src, dest, date;
+
+    cout << "Enter Source Station: ";
+    getline(cin >> ws, src);
+
+    cout << "Enter Destination Station: ";
+    getline(cin >> ws, dest);
+
+    cout << "Enter Journey Date (DD-MM-YYYY): ";
+    getline(cin >> ws, date);
+
+    long long pnr = Ticket::generatePNR();
+
+    Ticket newTicket(++ticketCounter, pnr, name, trainNo,
+                     src, dest, date, "Confirmed");
+
+    Node* newNode = new Node(newTicket);
+
+    if (head == NULL)
+        head = newNode;
+    else
+    {
+        Node* temp = head;
+        while (temp->next != NULL)
+            temp = temp->next;
+
+        temp->next = newNode;
+    }
+
+    saveTicketsToFile();
+
+    cout << "\nTicket generated successfully!\n";
+    cout << "Ticket Number: " << ticketCounter << endl;
+    cout << "PNR Number: " << pnr << endl;
+    cout << "Allocated Seat Number: " << seatNo << endl;
+
+    newTicket.printTicket();
+    return pnr;
+}
+
+Ticket* TicketManagement::searchByPNR(long long pnr)
+{
+    Node* temp = head;
+
+    while (temp != NULL)
+    {
+        if (temp->ticket.getPNR() == pnr)
+            return &(temp->ticket);
 
         temp = temp->next;
     }
 
     return NULL;
-} 
+}
+
+void TicketManagement::displayTicket(long long pnr)
+{
+    Ticket* ticket = searchByPNR(pnr);
+
+    if (ticket != NULL)
+        ticket->displayTicket();
+    else
+        cout << "\nTicket not found!\n";
+}
+
+void TicketManagement::printTicket(long long pnr)
+{
+    Ticket* ticket = searchByPNR(pnr);
+
+    if (ticket != NULL)
+        ticket->printTicket();
+    else
+        cout << "\nTicket not found!\n";
+}
+
+void TicketManagement::updateTicketStatus(long long pnr, string newStatus)
+{
+    Ticket* ticket = searchByPNR(pnr);
+
+    if (ticket != NULL)
+    {
+        ticket->updateTicketStatus(newStatus);
+        saveTicketsToFile();
+        cout << "\nTicket status updated!\n";
+    }
+    else
+        cout << "\nTicket not found!\n";
+}
+
+void TicketManagement::displayAllTickets()
+{
+    if (head == NULL)
+    {
+        cout << "\nNo tickets available.\n";
+        return;
+    }
+
+    Node* temp = head;
+
+    while (temp != NULL)
+    {
+        temp->ticket.displayTicket();
+        cout << "\n----------------------------------------\n";
+        temp = temp->next;
+    }
+}
